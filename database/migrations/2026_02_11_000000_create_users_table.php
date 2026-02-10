@@ -16,10 +16,11 @@ return new class extends Migration
             $table->string('full_name');
             $table->string('email')->unique();
             $table->string('mobile_no')->unique();
-            $table->string('role')->default('user'); // owner, broker, user
+            $table->string('role')->default('user');
             $table->string('referral_code')->unique();
             $table->string('referred_by')->nullable();
             $table->string('otp')->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
             $table->boolean('verified_otp')->default(false);
             $table->boolean('login_in')->default(false);
             $table->timestamps();
