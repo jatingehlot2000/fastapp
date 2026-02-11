@@ -17,7 +17,7 @@ class PropertyController extends Controller
         
         $properties->each(function($property) {
             $property->images->each(function($image) {
-                $image->image_url = 'https://test.teerthsewanyas.org/' . $image->image_path;
+                $image->media_url = 'https://test.teerthsewanyas.org/' . $image->image_path;
             });
         });
         
@@ -59,7 +59,9 @@ class PropertyController extends Controller
                 'monthly_rent' => 'required|numeric',
                 'security_deposit' => 'required|numeric',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-                'images' => 'nullable|array|max:5',
+                'images' => 'nullable|array|max:3',
+                'videos.*' => 'nullable|mimes:mp4,mov,avi,wmv|max:256000',
+                'videos' => 'nullable|array|max:3',
             ]);
 
             if ($validator->fails()) {
@@ -71,13 +73,14 @@ class PropertyController extends Controller
                 ], 422);
             }
 
-            $propertyData = $request->except('images');
+            $propertyData = $request->except(['images', 'videos']);
             $propertyData['user_id'] = $request->user()->id;
 
             $property = Property::create($propertyData);
             Log::info('Property created with ID: ' . $property->id);
 
-            $imagePaths = [];
+            $mediaPaths = [];
+            
             if ($request->hasFile('images')) {
                 $uploadPath = public_path('property_images');
                 if (!file_exists($uploadPath)) {
@@ -92,17 +95,39 @@ class PropertyController extends Controller
                     PropertyImage::create([
                         'property_id' => $property->id,
                         'image_path' => $imagePath,
+                        'media_type' => 'image',
                     ]);
-                    $imagePaths[] = 'https://test.teerthsewanyas.org/' . $imagePath;
+                    $mediaPaths[] = 'https://test.teerthsewanyas.org/' . $imagePath;
                 }
-                Log::info('Images uploaded: ' . count($imagePaths));
             }
+            
+            if ($request->hasFile('videos')) {
+                $uploadPath = public_path('property_videos');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                foreach ($request->file('videos') as $video) {
+                    $filename = time() . '_' . uniqid() . '.' . $video->getClientOriginalExtension();
+                    $video->move($uploadPath, $filename);
+                    $videoPath = 'property_videos/' . $filename;
+
+                    PropertyImage::create([
+                        'property_id' => $property->id,
+                        'image_path' => $videoPath,
+                        'media_type' => 'video',
+                    ]);
+                    $mediaPaths[] = 'https://test.teerthsewanyas.org/' . $videoPath;
+                }
+            }
+            
+            Log::info('Media uploaded: ' . count($mediaPaths));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Property submitted successfully',
                 'property_id' => $property->id,
-                'images' => $imagePaths,
+                'media' => $mediaPaths,
             ], 201);
         } catch (\Exception $e) {
             Log::error('Property submission error: ' . $e->getMessage());
