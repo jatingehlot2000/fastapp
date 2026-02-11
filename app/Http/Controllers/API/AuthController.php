@@ -11,6 +11,15 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class AuthController extends \App\Http\Controllers\Controller
+
+    public function getUsers()
+    {
+        $users = User::all();
+        return response()->json([
+            'success' => true,
+            'users' => $users
+        ]);
+    }
 {
     public function register(Request $request)
     {
@@ -296,7 +305,7 @@ class AuthController extends \App\Http\Controllers\Controller
     {
         try {
             $user = $request->user();
-            
+
             if (!$user) {
                 return response()->json([
                     'success' => false,
@@ -327,7 +336,7 @@ class AuthController extends \App\Http\Controllers\Controller
     {
         try {
             $message = "Dear User, {$otp} is Your Login Otp. Otp valid 15 minute. Regards - TEERTH SEWA NYAS";
-            
+
             $response = Http::get('https://amazesms.in/api/pushsms', [
                 'user' => 'Tirth',
                 'authkey' => '92SmYf8pxCKI',
@@ -337,9 +346,9 @@ class AuthController extends \App\Http\Controllers\Controller
                 'entityid' => '1701158047339525963',
                 'templateid' => '1007682601829157819'
             ]);
-            
+
             Log::info('OTP SMS API Response:', ['response' => $response->body()]);
-            
+
             return $response->successful();
         } catch (\Exception $e) {
             Log::error('Error sending OTP: ' . $e->getMessage());
