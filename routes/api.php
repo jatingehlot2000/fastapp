@@ -9,8 +9,13 @@ Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('resend-otp', [AuthController::class, 'resendOtp']);
-    
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
     });
+});
+
+Route::prefix('property')->middleware('auth:sanctum')->group(function () {
+    Route::post('add', [\App\Http\Controllers\API\PropertyController::class, 'store']);
+    Route::get('list', [\App\Http\Controllers\API\PropertyController::class, 'index']);
 });
