@@ -20,6 +20,11 @@ class AuthController extends \App\Http\Controllers\Controller
     public function getUsers()
     {
         $users = User::all();
+        $users->each(function($user) {
+            if ($user->profile_pic) {
+                $user->profile_pic_url = 'https://test.teerthsewanyas.org/' . $user->profile_pic;
+            }
+        });
         return response()->json([
             'success' => true,
             'users' => $users
@@ -254,7 +259,8 @@ class AuthController extends \App\Http\Controllers\Controller
                         'email' => $user->email,
                         'mobile_no' => $user->mobile_no,
                         'role' => $user->role,
-                        'referral_code' => $user->referral_code
+                        'referral_code' => $user->referral_code,
+                        'profile_pic_url' => $user->profile_pic ? 'https://test.teerthsewanyas.org/' . $user->profile_pic : null
                     ]
                 ]
             ]);
@@ -362,6 +368,90 @@ class AuthController extends \App\Http\Controllers\Controller
         } catch (\Exception $e) {
             Log::error('Error sending OTP: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    public function updateProfile(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            $validator = Validator::make($request->all(), [
+                'full_name' => 'nullable|string|max:255',
+                'email' => 'nullable|email|unique:users,email,' . $user->id,
+                'mobile_no' => 'nullable|string|unique:users,mobile_no,' . $user->id,
+                'role' => 'nullable|in:owner,broker,user',
+                'referred_by' => 'nullable|string',
+                'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            if ($request->filled('full_name')) {
+                $user->full_name = $request->full_name;
+            }
+
+            if ($request->filled('email')) {
+                $user->email = $request->email;
+            }
+
+            if ($request->filled('mobile_no')) {
+                $user->mobile_no = $request->mobile_no;
+            }
+
+            if ($request->filled('role')) {
+                $user->role = $request->role;
+            }
+
+            if ($request->filled('referred_by')) {
+                $user->referred_by = $request->referred_by;
+            }
+
+            if ($request->hasFile('profile_pic')) {
+                if ($user->profile_pic && file_exists(public_path($user->profile_pic))) {
+                    unlink(public_path($user->profile_pic));
+                }
+
+                $uploadPath = public_path('profile_pics');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                $file = $request->file('profile_pic');
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadPath, $filename);
+                $user->profile_pic = 'profile_pics/' . $filename;
+            }
+
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully',
+                'user' => [
+                    'id' => $user->id,
+                    'full_name' => $user->full_name,
+                    'email' => $user->email,
+                    'mobile_no' => $user->mobile_no,
+                    'role' => $user->role,
+                    'referral_code' => $user->referral_code,
+                    'referred_by' => $user->referred_by,
+                    'profile_pic_url' => $user->profile_pic ? 'https://test.teerthsewanyas.org/' . $user->profile_pic : null
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Update profile error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update profile',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }
