@@ -12,6 +12,11 @@ use Carbon\Carbon;
 
 class AuthController extends \App\Http\Controllers\Controller
 
+{
+
+
+
+
     public function getUsers()
     {
         $users = User::all();
@@ -20,7 +25,9 @@ class AuthController extends \App\Http\Controllers\Controller
             'users' => $users
         ]);
     }
-{
+
+
+
     public function register(Request $request)
     {
         try {
@@ -118,6 +125,8 @@ class AuthController extends \App\Http\Controllers\Controller
             ], 500);
         }
     }
+
+
 
     public function login(Request $request)
     {
