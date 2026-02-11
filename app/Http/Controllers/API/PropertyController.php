@@ -266,4 +266,48 @@ class PropertyController extends Controller
         }
     }
 
+    public function destroy(Request $request, $id)
+    {
+        try {
+            $property = Property::find($id);
+            if (!$property) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Property not found'
+                ], 404);
+            }
+
+            if ($property->user_id !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to delete this property'
+                ], 403);
+            }
+
+            $images = PropertyImage::where('property_id', $id)->get();
+            foreach ($images as $image) {
+                $filePath = public_path($image->image_path);
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+                $image->delete();
+            }
+
+            $property->delete();
+            Log::info('Property deleted with ID: ' . $id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Property deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Property delete error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete property',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

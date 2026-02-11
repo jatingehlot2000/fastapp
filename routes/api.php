@@ -21,4 +21,5 @@ Route::prefix('property')->middleware('auth:sanctum')->group(function () {
     Route::post('add', [\App\Http\Controllers\API\PropertyController::class, 'store']);
     Route::get('list', [\App\Http\Controllers\API\PropertyController::class, 'index']);
     Route::post('update/{id}', [\App\Http\Controllers\API\PropertyController::class, 'update']);
+    Route::delete('delete/{id}', [\App\Http\Controllers\API\PropertyController::class, 'destroy']);
 });
