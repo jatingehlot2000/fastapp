@@ -14,6 +14,13 @@ class PropertyController extends Controller
     public function index(Request $request)
     {
         $properties = Property::with('images')->get();
+        
+        $properties->each(function($property) {
+            $property->images->each(function($image) {
+                $image->image_url = 'https://test.teerthsewanyas.org/' . $image->image_path;
+            });
+        });
+        
         return response()->json([
             'success' => true,
             'properties' => $properties
@@ -86,7 +93,7 @@ class PropertyController extends Controller
                         'property_id' => $property->id,
                         'image_path' => $imagePath,
                     ]);
-                    $imagePaths[] = url($imagePath);
+                    $imagePaths[] = 'https://test.teerthsewanyas.org/' . $imagePath;
                 }
                 Log::info('Images uploaded: ' . count($imagePaths));
             }
