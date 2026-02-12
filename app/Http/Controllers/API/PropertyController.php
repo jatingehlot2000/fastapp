@@ -208,6 +208,16 @@ class PropertyController extends Controller
             $mediaPaths = [];
 
             if ($request->hasFile('images')) {
+                // Delete existing images
+                $existingImages = PropertyImage::where('property_id', $property->id)->where('media_type', 'image')->get();
+                foreach ($existingImages as $image) {
+                    $filePath = public_path($image->image_path);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                    $image->delete();
+                }
+
                 $uploadPath = public_path('property_images');
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0755, true);
@@ -228,6 +238,16 @@ class PropertyController extends Controller
             }
 
             if ($request->hasFile('videos')) {
+                // Delete existing videos
+                $existingVideos = PropertyImage::where('property_id', $property->id)->where('media_type', 'video')->get();
+                foreach ($existingVideos as $video) {
+                    $filePath = public_path($video->image_path);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                    $video->delete();
+                }
+
                 $uploadPath = public_path('property_videos');
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0755, true);
