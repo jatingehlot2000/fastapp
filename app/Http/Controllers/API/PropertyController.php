@@ -58,6 +58,7 @@ class PropertyController extends Controller
                 'longitude' => 'nullable|numeric',
                 'monthly_rent' => 'required|numeric',
                 'security_deposit' => 'required|numeric',
+                'is_live' => 'nullable|boolean',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'images' => 'nullable|array|max:3',
                 'videos.*' => 'nullable|mimes:mp4,mov,avi,wmv|max:256000',
@@ -186,6 +187,7 @@ class PropertyController extends Controller
                 'longitude' => 'nullable|numeric',
                 'monthly_rent' => 'required|numeric',
                 'security_deposit' => 'required|numeric',
+                'is_live' => 'nullable|boolean',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'images' => 'nullable|array|max:3',
                 'videos.*' => 'nullable|mimes:mp4,mov,avi,wmv|max:256000',
@@ -281,6 +283,53 @@ class PropertyController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update property',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function toggleLive(Request $request, $id)
+    {
+        try {
+            $property = Property::find($id);
+            if (!$property) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Property not found'
+                ], 404);
+            }
+
+            if ($property->user_id !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to update this property'
+                ], 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'is_live' => 'required|boolean',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $property->update(['is_live' => $request->is_live]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Property live status updated successfully',
+                'is_live' => $property->is_live,
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Property toggle live error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update property live status',
                 'error' => $e->getMessage()
             ], 500);
         }

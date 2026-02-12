@@ -36,6 +36,7 @@ class Property extends Model
         'longitude',
         'monthly_rent',
         'security_deposit',
+        'is_live',
     ];
 
     public function images()
