@@ -37,6 +37,8 @@ class Property extends Model
         'monthly_rent',
         'security_deposit',
         'is_live',
+        'sector',
+        'house_no',
     ];
 
     public function images()
