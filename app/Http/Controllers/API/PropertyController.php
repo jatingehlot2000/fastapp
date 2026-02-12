@@ -13,7 +13,7 @@ class PropertyController extends Controller
 {
     public function index(Request $request)
     {
-        $properties = Property::with('images')->get();
+        $properties = Property::where('user_id', $request->user()->id)->with('images')->get();
 
         $properties->each(function($property) {
             $property->images->each(function($image) {
